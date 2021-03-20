@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="sample.CurrencyTableWindowController" fx:id="borderPane">
+    <left>
+        <HBox prefWidth="100">
+            <Label text="Powrót" onMouseClicked="#loadPreviousPage" style="-fx-font-size: 13px;"/>
+        </HBox>
+    </left>
+    <center>
+        <VBox alignment="CENTER">
+            <Label text="Aktualna tabela walut" textAlignment="CENTER" style="-fx-font-size: 28px;"/>
+            <TableView fx:id="currencyTableView">
+                <columns>
+                    <TableColumn prefWidth="200" text="Nazwa">
+                        <cellValueFactory>
+                            <PropertyValueFactory property="name"/>
+                        </cellValueFactory>
+                    </TableColumn>
+                    <TableColumn prefWidth="100" text="Kod">
+                        <cellValueFactory>
+                            <PropertyValueFactory property="code"/>
+                        </cellValueFactory>
+                    </TableColumn>
+                    <TableColumn prefWidth="100" text="Wartość">
+                        <cellValueFactory>
+                            <PropertyValueFactory property="value"/>
+                        </cellValueFactory>
+                    </TableColumn>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
+    <right>
+        <HBox prefWidth="100"/>
+    </right>
+</BorderPane>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="sample.SearchDataController" fx:id="borderPane">
+    <left>
+        <HBox prefWidth="100">
+            <Label text="Powrót" textAlignment="CENTER" onMouseClicked="#loadPreviousPage" style="-fx-font-size: 13px;"/>
+        </HBox>
+    </left>
+    <center>
+        <VBox alignment="CENTER" spacing="30">
+            <VBox alignment="CENTER" spacing="10">
+                <Label text="Data początkowa:" textAlignment="CENTER" style="-fx-font-size: 16px;"/>
+                <DatePicker fx:id="beginDate"/>
+            </VBox>
+            <VBox alignment="CENTER" spacing="10">
+                <Label text="Data końcowa:" textAlignment="CENTER" style="-fx-font-size: 16px;"/>
+                <DatePicker fx:id="endDate"/>
+            </VBox>
+            <VBox alignment="CENTER" spacing="10">
+                <Label text="Waluta:" textAlignment="CENTER" style="-fx-font-size: 16px;"/>
+                <ComboBox fx:id="comboBox"/>
+            </VBox>
+            <Button text="Zatwierdź" textAlignment="CENTER" onAction="#loadSpecialCurrencyPage" style="-fx-background-radius: 30px;"/>
+        </VBox>
+    </center>
+    <right>
+        <HBox prefWidth="100"/>
+    </right>
+</BorderPane>
