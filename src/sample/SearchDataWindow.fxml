@@ -15,11 +15,11 @@
         <VBox alignment="CENTER" spacing="30">
             <VBox alignment="CENTER" spacing="10">
                 <Label text="Data początkowa:" textAlignment="CENTER" style="-fx-font-size: 16px;"/>
-                <DatePicker fx:id="beginDate"/>
+                <DatePicker fx:id="beginDate" editable="false"/>
             </VBox>
             <VBox alignment="CENTER" spacing="10">
                 <Label text="Data końcowa:" textAlignment="CENTER" style="-fx-font-size: 16px;"/>
-                <DatePicker fx:id="endDate"/>
+                <DatePicker fx:id="endDate" editable="false"/>
             </VBox>
             <VBox alignment="CENTER" spacing="10">
                 <Label text="Waluta:" textAlignment="CENTER" style="-fx-font-size: 16px;"/>

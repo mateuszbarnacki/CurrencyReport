@@ -2,21 +2,11 @@ package sample;
 
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 public class SearchDataController {
@@ -28,16 +18,24 @@ public class SearchDataController {
     public DatePicker endDate;
     @FXML
     public ComboBox<String> comboBox;
-    private final List<String> currencyName = new ArrayList<>();
-    private final List<String> currencyCodes = new ArrayList<>();
 
     public void initialize() {
-        this.beginDate.setValue(LocalDate.now());
-        this.endDate.setValue(LocalDate.now());
-        prepareListOfCurrencies("http://api.nbp.pl/api/exchangerates/tables/A/");
-        prepareListOfCurrencies("http://api.nbp.pl/api/exchangerates/tables/B/");
-        this.comboBox.setValue(this.currencyName.get(0));
-        this.comboBox.setItems(FXCollections.observableList(this.currencyName));
+        this.beginDate.setDayCellFactory(picker -> new DateCell()    {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                setDisable(empty || date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY || date.compareTo(LocalDate.now()) > 0 || date.compareTo(LocalDate.of(2002, 1, 2)) < 0);
+            }
+        });
+        this.endDate.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                setDisable(empty || date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY || date.compareTo(LocalDate.now()) > 0 || date.compareTo(LocalDate.of(2002, 1, 2)) < 0);
+            }
+        });
+        this.comboBox.setValue(Datasource.getInstance().getCurrencyByIndex(0).getName());
+        this.comboBox.setItems(FXCollections.observableList(Datasource.getInstance().getListOfCurrenciesNames()));
     }
 
     @FXML
@@ -65,50 +63,12 @@ public class SearchDataController {
         }
     }
 
-
-    private void prepareListOfCurrencies(String address) {
-        try {
-            URL url = new URL(address);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setReadTimeout(10000);
-            int code = connection.getResponseCode();
-
-            if (code != 200) {
-                System.out.println("Couldn't get data!");
-            } else {
-                BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line;
-                while ((line = input.readLine()) != null) {
-                    String[] tempArr = line.split(",");
-                    for (String elem : tempArr) {
-                        String[] test = elem.split(":");
-                        if (test[0].compareTo("{\"currency\"") == 0) {
-                            this.currencyName.add(test[1].substring(1, test[1].length()-1));
-                        } else if (test[0].compareTo("\"rates\"") == 0) {
-                            this.currencyName.add(test[2].substring(1, test[2].length()-1));
-                        } else if (test[0].compareTo("\"code\"") == 0) {
-                            this.currencyCodes.add(test[1].substring(1, 4));
-                        }
-                    }
-                }
-                input.close();
-            }
-        } catch (MalformedURLException e) {
-            System.out.println("Couldn't get data: " + e.getMessage());
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("IOException while getting data: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
     private void setSearchData() {
         CurrencyHolder.getInstance().setName(this.comboBox.getSelectionModel().getSelectedItem());
         int position = 0;
-        for (String elem : this.currencyName) {
+        for (String elem : Datasource.getInstance().getListOfCurrenciesNames()) {
             if (elem.compareTo(this.comboBox.getSelectionModel().getSelectedItem()) == 0) {
-                CurrencyHolder.getInstance().setCode(this.currencyCodes.get(position));
+                CurrencyHolder.getInstance().setCode(Datasource.getInstance().getCurrencyByIndex(position).getCode());
             }
             position++;
         }

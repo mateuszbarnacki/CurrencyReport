@@ -15,7 +15,12 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,10 +31,6 @@ public class SpecialCurrencyController {
     public Label nameLabel;
     @FXML
     public Label codeLabel;
-    @FXML
-    public Label beginningLabel;
-    @FXML
-    public Label endLabel;
     @FXML
     public TableView<CurrencyHistory> historyTableView;
     @FXML
@@ -46,11 +47,12 @@ public class SpecialCurrencyController {
     public void initialize() {
         this.nameLabel.setText(CurrencyHolder.getInstance().getName());
         this.codeLabel.setText(CurrencyHolder.getInstance().getCode());
-        this.beginningLabel.setText(CurrencyHolder.getInstance().getBeginning().toString());
-        this.endLabel.setText(CurrencyHolder.getInstance().getEnd().toString());
         this.specialDate.setValue(CurrencyHolder.getInstance().getEnd());
-        //searchCurrencyDataForSpecialDate();
-        searchCurrencyDataForPeriodOfTime();
+        if (CurrencyHolder.getInstance().getBeginning().compareTo(CurrencyHolder.getInstance().getEnd()) == 0) {
+            searchCurrencyDataForSpecialDate();
+        } else {
+            searchCurrencyDataForPeriodOfTime();
+        }
         Task<ObservableList<CurrencyHistory>> task = new GetHistory();
         this.historyTableView.itemsProperty().bind(task.valueProperty());
         new Thread(task).start();
@@ -121,12 +123,36 @@ public class SpecialCurrencyController {
     }
 
     private void searchCurrencyDataForSpecialDate() {
-        //System.out.println(CurrencyHolder.getInstance().getBeginning().toString());
-        executeQuery("http://api.nbp.pl/api/exchangerates/rates/A/" + CurrencyHolder.getInstance().getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/");
+        Currency currency = Datasource.getInstance().getCurrencyByName(CurrencyHolder.getInstance().getName());
+        executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/");
     }
 
     private void searchCurrencyDataForPeriodOfTime() {
-        executeQuery("http://api.nbp.pl/api/exchangerates/rates/A/" + CurrencyHolder.getInstance().getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/" + CurrencyHolder.getInstance().getEnd().toString() + "/");
+        final long dayConst = 24*3600*1000;
+        long diffOfDays;
+        Currency currency = Datasource.getInstance().getCurrencyByName(CurrencyHolder.getInstance().getName());
+        Date beginning;
+        Date end;
+        MyPeriod myPeriod;
+        LocalDate temp;
+        List<MyPeriod> myPeriods = new ArrayList<>();
+        do {
+            beginning = Date.from(CurrencyHolder.getInstance().getBeginning().atStartOfDay(ZoneId.systemDefault()).toInstant());
+            end = Date.from(CurrencyHolder.getInstance().getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant());
+            diffOfDays = (end.getTime() - beginning.getTime()) / dayConst;
+            if (diffOfDays <= 80L) {
+                myPeriod = new MyPeriod(beginning.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), end.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+            } else {
+                temp = CurrencyHolder.getInstance().getEnd();
+                CurrencyHolder.getInstance().setEnd(CurrencyHolder.getInstance().getEnd().minusDays(80));
+                myPeriod = new MyPeriod(CurrencyHolder.getInstance().getEnd(), temp);
+            }
+            myPeriods.add(myPeriod);
+        } while (diffOfDays > 80L);
+        int idx = myPeriods.size()-1;
+        for (int i = idx; i >= 0; i--) {
+            executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + myPeriods.get(i).getBeginning().toString() + "/" + myPeriods.get(i).getEnd().toString() + "/");
+        }
     }
 
     private void executeQuery(String query) {
@@ -137,7 +163,12 @@ public class SpecialCurrencyController {
             connection.setReadTimeout(10000);
             int code = connection.getResponseCode();
 
-            if (code != 200) {
+            if (code == 404) {
+                Currency currency = Datasource.getInstance().getCurrencyByName(CurrencyHolder.getInstance().getName());
+                CurrencyHolder.getInstance().setBeginning(CurrencyHolder.getInstance().getBeginning().minusDays(1));
+                executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/" + CurrencyHolder.getInstance().getEnd().toString() + "/");
+                return;
+            } else if (code != 200) {
                 System.out.println("Couldn't get data!");
             } else {
                 BufferedReader input = new BufferedReader(new InputStreamReader(url.openStream()));

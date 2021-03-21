@@ -11,16 +11,16 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="sample.CurrencyTableWindowController" fx:id="borderPane">
     <left>
-        <HBox prefWidth="100">
-            <Label text="Powrót" onMouseClicked="#loadPreviousPage" style="-fx-font-size: 13px;"/>
+        <HBox prefWidth="50">
+            <Label text="Powrót" onMouseClicked="#loadPreviousPage" style="-fx-font-size: 12px;"/>
         </HBox>
     </left>
     <center>
-        <VBox alignment="CENTER">
+        <VBox alignment="CENTER" minWidth="350" spacing="10">
             <Label text="Aktualna tabela walut" textAlignment="CENTER" style="-fx-font-size: 28px;"/>
-            <TableView fx:id="currencyTableView">
+            <TableView fx:id="currencyTableView" minWidth="350">
                 <columns>
-                    <TableColumn prefWidth="200" text="Nazwa">
+                    <TableColumn prefWidth="150" text="Nazwa">
                         <cellValueFactory>
                             <PropertyValueFactory property="name"/>
                         </cellValueFactory>
@@ -30,7 +30,7 @@
                             <PropertyValueFactory property="code"/>
                         </cellValueFactory>
                     </TableColumn>
-                    <TableColumn prefWidth="100" text="Wartość">
+                    <TableColumn prefWidth="140" text="Wartość">
                         <cellValueFactory>
                             <PropertyValueFactory property="value"/>
                         </cellValueFactory>
@@ -40,6 +40,6 @@
         </VBox>
     </center>
     <right>
-        <HBox prefWidth="100"/>
+        <HBox prefWidth="50"/>
     </right>
 </BorderPane>

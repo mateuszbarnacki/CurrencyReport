@@ -6,11 +6,13 @@ public class Currency {
     private final SimpleStringProperty name = new SimpleStringProperty();
     private final SimpleStringProperty code = new SimpleStringProperty();
     private final SimpleStringProperty value = new SimpleStringProperty();
+    private final String type;
 
-    public Currency(String name, String code, String value) {
+    public Currency(String name, String code, String value, String type) {
         this.name.set(name);
         this.code.set(code);
         this.value.set(value);
+        this.type = type;
     }
 
     public String getName() {
@@ -23,6 +25,10 @@ public class Currency {
 
     public String getValue() {
         return this.value.get();
+    }
+
+    public String getType() {
+        return this.type;
     }
 
     @Override
