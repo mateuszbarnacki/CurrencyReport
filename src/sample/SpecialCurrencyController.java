@@ -125,6 +125,7 @@ public class SpecialCurrencyController {
     private void searchCurrencyDataForSpecialDate() {
         Currency currency = Datasource.getInstance().getCurrencyByName(CurrencyHolder.getInstance().getName());
         executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/");
+        CurrenciesData.getInstance().copy(this.history);
     }
 
     private void searchCurrencyDataForPeriodOfTime() {
@@ -151,8 +152,12 @@ public class SpecialCurrencyController {
         } while (diffOfDays > 80L);
         int idx = myPeriods.size()-1;
         for (int i = idx; i >= 0; i--) {
+            CurrencyHolder.getInstance().setBeginning(myPeriods.get(i).getBeginning());
+            CurrencyHolder.getInstance().setEnd(myPeriods.get(i).getEnd());
+            //while(executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + myPeriods.get(i).getBeginning().toString() + "/" + myPeriods.get(i).getEnd().toString() + "/") == 404);
             executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + myPeriods.get(i).getBeginning().toString() + "/" + myPeriods.get(i).getEnd().toString() + "/");
         }
+        CurrenciesData.getInstance().copy(this.history);
     }
 
     private void executeQuery(String query) {
@@ -167,7 +172,6 @@ public class SpecialCurrencyController {
                 Currency currency = Datasource.getInstance().getCurrencyByName(CurrencyHolder.getInstance().getName());
                 CurrencyHolder.getInstance().setBeginning(CurrencyHolder.getInstance().getBeginning().minusDays(1));
                 executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/" + CurrencyHolder.getInstance().getEnd().toString() + "/");
-                return;
             } else if (code != 200) {
                 System.out.println("Couldn't get data!");
             } else {
@@ -190,8 +194,9 @@ public class SpecialCurrencyController {
                 for (int i = 0; i < this.dates.size(); i++) {
                     this.history.add(new CurrencyHistory(this.dates.get(i), this.values.get(i)));
                 }
-                CurrenciesData.getInstance().copy(this.history);
             }
+            this.dates.clear();
+            this.values.clear();
         } catch (MalformedURLException e) {
             System.out.println("MalformedURLException: " + e.getMessage());
             e.printStackTrace();
