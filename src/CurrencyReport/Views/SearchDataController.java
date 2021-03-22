@@ -1,9 +1,11 @@
-package sample;
+package CurrencyReport.Views;
 
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import CurrencyReport.Datamodel.CurrencyHolder;
+import CurrencyReport.Datamodel.Datasource;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -46,7 +48,17 @@ public class SearchDataController {
 
     @FXML
     public void loadSpecialCurrencyPage() {
-        if (this.beginDate.getValue().compareTo(this.endDate.getValue()) > 0) {
+        if (this.beginDate.getValue() == null || this.endDate.getValue() == null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText(null);
+            alert.setTitle("Błąd daty");
+            alert.setContentText("Brak wybranej daty!");
+
+            Optional<ButtonType> response = alert.showAndWait();
+            if (response.isPresent()) {
+                alert.close();
+            }
+        } else if (this.beginDate.getValue().compareTo(this.endDate.getValue()) > 0) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setHeaderText(null);
             alert.setTitle("Błąd daty");

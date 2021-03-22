@@ -1,4 +1,4 @@
-package sample;
+package CurrencyReport.Views;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.layout.BorderPane;

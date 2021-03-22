@@ -1,4 +1,4 @@
-package sample;
+package CurrencyReport.Views;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -6,6 +6,8 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import CurrencyReport.Datamodel.Currency;
+import CurrencyReport.Datamodel.Datasource;
 
 public class CurrencyTableWindowController {
     @FXML

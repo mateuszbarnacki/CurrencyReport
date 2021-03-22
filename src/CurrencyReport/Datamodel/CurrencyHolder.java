@@ -1,4 +1,4 @@
-package sample;
+package CurrencyReport.Datamodel;
 
 import java.time.LocalDate;
 

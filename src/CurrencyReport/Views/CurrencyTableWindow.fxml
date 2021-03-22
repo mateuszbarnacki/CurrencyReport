@@ -9,7 +9,7 @@
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="sample.CurrencyTableWindowController" fx:id="borderPane">
+            fx:controller="CurrencyReport.Views.CurrencyTableWindowController" fx:id="borderPane">
     <left>
         <HBox prefWidth="50">
             <Label text="Powrót" onMouseClicked="#loadPreviousPage" style="-fx-font-size: 12px;"/>

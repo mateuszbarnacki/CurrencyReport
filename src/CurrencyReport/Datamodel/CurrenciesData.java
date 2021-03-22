@@ -1,4 +1,4 @@
-package sample;
+package CurrencyReport.Datamodel;
 
 import java.util.ArrayList;
 import java.util.List;

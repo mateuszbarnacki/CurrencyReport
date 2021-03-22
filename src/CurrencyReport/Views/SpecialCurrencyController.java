@@ -1,4 +1,4 @@
-package sample;
+package CurrencyReport.Views;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import CurrencyReport.Datamodel.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,10 +16,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -42,17 +42,30 @@ public class SpecialCurrencyController {
     private final List<String> dates = new ArrayList<>();
     private final List<String> values = new ArrayList<>();
     private final List<CurrencyHistory> history = new ArrayList<>();
-
+    private LocalDate beginning;
+    private LocalDate end;
 
     public void initialize() {
+        this.beginning = CurrencyHolder.getInstance().getBeginning();
+        this.end = CurrencyHolder.getInstance().getEnd();
         this.nameLabel.setText(CurrencyHolder.getInstance().getName());
         this.codeLabel.setText(CurrencyHolder.getInstance().getCode());
         this.specialDate.setValue(CurrencyHolder.getInstance().getEnd());
+
         if (CurrencyHolder.getInstance().getBeginning().compareTo(CurrencyHolder.getInstance().getEnd()) == 0) {
             searchCurrencyDataForSpecialDate();
         } else {
             searchCurrencyDataForPeriodOfTime();
         }
+
+        this.specialDate.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                setDisable(empty || date.compareTo(beginning) < 0 || date.compareTo(end) > 0 || date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY);
+            }
+        });
+
         Task<ObservableList<CurrencyHistory>> task = new GetHistory();
         this.historyTableView.itemsProperty().bind(task.valueProperty());
         new Thread(task).start();
@@ -80,9 +93,18 @@ public class SpecialCurrencyController {
         NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Dates");
         yAxis.setAutoRanging(false);
-        yAxis.setLowerBound(min - 0.1);
-        yAxis.setUpperBound(max + 0.1);
-        yAxis.setTickUnit((max-min) * 0.1);
+        if (min == 10.0) {
+            min = max - 0.1;
+        }
+        yAxis.setLowerBound(min);
+        yAxis.setUpperBound(max);
+        if (max-min > 1.0) {
+            yAxis.setTickUnit(0.5);
+        } else if (max-min > 0.1 && max-min < 1.0) {
+            yAxis.setTickUnit(0.1);
+        } else {
+            yAxis.setTickUnit(0.01);
+        }
         yAxis.setLabel("Currency price");
         LineChart<String, Number> lineChart = new LineChart<String, Number>(xAxis, yAxis);
         lineChart.setTitle(CurrencyHolder.getInstance().getName().substring(0, 1).toUpperCase() + CurrencyHolder.getInstance().getName().substring(1));
@@ -92,6 +114,9 @@ public class SpecialCurrencyController {
         }
         lineChart.getData().add(series);
         lineChart.setLegendVisible(false);
+        if (series.getData().size() > 12) {
+            lineChart.setCreateSymbols(false);
+        }
         pane.setContent(lineChart);
         dialog.setDialogPane(pane);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
@@ -102,7 +127,7 @@ public class SpecialCurrencyController {
 
     @FXML
     public void searchSpecialValue(ActionEvent event) {
-        if (this.specialDate.getValue().compareTo(CurrencyHolder.getInstance().getEnd()) > 0 || this.specialDate.getValue().compareTo(CurrencyHolder.getInstance().getBeginning()) < 0) {
+        if (this.specialDate.getValue().compareTo(this.end) > 0 || this.specialDate.getValue().compareTo(this.beginning) < 0) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Błędna data");
             alert.setHeaderText(null);
@@ -113,10 +138,23 @@ public class SpecialCurrencyController {
                 alert.close();
             }
         } else {
+            boolean isExists = false;
             for (CurrencyHistory elem : this.history) {
                 if (elem.getDate().compareTo(this.specialDate.getValue().toString()) == 0) {
                     this.searchDateLabel.setText(elem.getDate());
                     this.searchValueLabel.setText(elem.getValue());
+                    isExists = true;
+                }
+            }
+            if (!isExists) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Błędna data");
+                alert.setHeaderText(null);
+                alert.setContentText("Brak danych dla wybranej daty! \nBłąd spowodowany brakiem notowania w danym dniu \nkalendarzowym.");
+
+                Optional<ButtonType> response = alert.showAndWait();
+                if (response.isPresent()) {
+                    alert.close();
                 }
             }
         }
@@ -152,9 +190,11 @@ public class SpecialCurrencyController {
         } while (diffOfDays > 80L);
         int idx = myPeriods.size()-1;
         for (int i = idx; i >= 0; i--) {
+            if (this.beginning.compareTo(myPeriods.get(i).getBeginning()) > 0) {
+                this.beginning = myPeriods.get(i).getBeginning();
+            }
             CurrencyHolder.getInstance().setBeginning(myPeriods.get(i).getBeginning());
             CurrencyHolder.getInstance().setEnd(myPeriods.get(i).getEnd());
-            //while(executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + myPeriods.get(i).getBeginning().toString() + "/" + myPeriods.get(i).getEnd().toString() + "/") == 404);
             executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + myPeriods.get(i).getBeginning().toString() + "/" + myPeriods.get(i).getEnd().toString() + "/");
         }
         CurrenciesData.getInstance().copy(this.history);
@@ -171,6 +211,9 @@ public class SpecialCurrencyController {
             if (code == 404) {
                 Currency currency = Datasource.getInstance().getCurrencyByName(CurrencyHolder.getInstance().getName());
                 CurrencyHolder.getInstance().setBeginning(CurrencyHolder.getInstance().getBeginning().minusDays(1));
+                if (this.beginning.compareTo(CurrencyHolder.getInstance().getBeginning()) > 0) {
+                    this.beginning = CurrencyHolder.getInstance().getBeginning();
+                }
                 executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/" + CurrencyHolder.getInstance().getEnd().toString() + "/");
             } else if (code != 200) {
                 System.out.println("Couldn't get data!");
