@@ -2,6 +2,10 @@ package CurrencyReport.Datamodel;
 
 import java.time.LocalDate;
 
+/**
+ * This class stores the information about selected currency in 'Dane szczegółowe waluty' window.
+ */
+
 public class CurrencyHolder {
     private static final CurrencyHolder instance = new CurrencyHolder();
     private String name;

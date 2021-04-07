@@ -2,6 +2,10 @@ package CurrencyReport.Datamodel;
 
 import javafx.beans.property.SimpleStringProperty;
 
+/**
+ * This class stores the information about dates and currency rates of single currency.
+ */
+
 public class CurrencyHistory {
     private final SimpleStringProperty date = new SimpleStringProperty();
     private final SimpleStringProperty value = new SimpleStringProperty();

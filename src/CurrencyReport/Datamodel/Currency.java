@@ -2,11 +2,15 @@ package CurrencyReport.Datamodel;
 
 import javafx.beans.property.SimpleStringProperty;
 
+/**
+ * This class stores data about single currency.
+ */
+
 public class Currency {
     private final SimpleStringProperty name = new SimpleStringProperty();
     private final SimpleStringProperty code = new SimpleStringProperty();
     private final SimpleStringProperty value = new SimpleStringProperty();
-    private final String type;
+    private final String type; // type of the table on API NBP website, could be A or B
 
     public Currency(String name, String code, String value, String type) {
         this.name.set(name);

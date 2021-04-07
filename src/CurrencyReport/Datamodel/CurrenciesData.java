@@ -3,6 +3,10 @@ package CurrencyReport.Datamodel;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class stores the whole list of currencies.
+ */
+
 public class CurrenciesData {
     private static final CurrenciesData instance = new CurrenciesData();
     private final List currencies = new ArrayList<>();

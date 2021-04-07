@@ -9,6 +9,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class download the information about currencies available on API NBP website.
+ */
+
 public class Datasource {
     private static final Datasource instance = new Datasource();
     private final List<Currency> currencies = new ArrayList<>();
@@ -19,6 +23,7 @@ public class Datasource {
         return instance;
     }
 
+    // This function load information from a specific table of currencies
     public void load() {
         loadDataFromSingleTable("A");
         loadDataFromSingleTable("B");
@@ -28,14 +33,7 @@ public class Datasource {
         return currencies;
     }
 
-    public Currency getCurrencyByCode(String code) {
-        Currency result = null;
-        for (Currency currency : currencies) {
-            if (currency.getCode().compareTo(code) == 0) result = currency;
-        }
-        return result;
-    }
-
+    // This function returns a currency searched by name
     public Currency getCurrencyByName(String name) {
         Currency result = null;
         for (Currency currency : currencies) {
@@ -44,22 +42,7 @@ public class Datasource {
         return result;
     }
 
-    public int getIndexByName(String name) {
-        int idx = -1;
-        for (int i = 0; i < currencies.size(); i++) {
-            if (currencies.get(i).getName().compareTo(name) == 0) idx = i;
-        }
-        return idx;
-    }
-
-    public int getIndexByCode(String code) {
-        int idx = -1;
-        for (int i = 0; i < currencies.size(); i++) {
-            if (currencies.get(i).getCode().compareTo(code) == 0) idx = i;
-        }
-        return idx;
-    }
-
+    // This function returns a currency searched by index
     public Currency getCurrencyByIndex(int idx) {
         Currency result = null;
         for (int i = 0; i < currencies.size(); i++) {
@@ -68,6 +51,7 @@ public class Datasource {
         return result;
     }
 
+    // This function returns the list of all currency names
     public List<String> getListOfCurrenciesNames() {
         List<String> names = new ArrayList<>();
         for (Currency currency : currencies) {
@@ -76,6 +60,7 @@ public class Datasource {
         return names;
     }
 
+    // This function get data from API NBP website
     private void loadDataFromSingleTable(String type) {
         List<String> currencyNames = new ArrayList<>();
         List<String> currencyCodes = new ArrayList<>();
