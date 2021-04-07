@@ -5,6 +5,10 @@ import javafx.scene.layout.BorderPane;
 
 import java.io.IOException;
 
+/**
+ * This class loads FXML views.
+ */
+
 public class WindowLoader {
     private final String filename;
 
@@ -12,6 +16,8 @@ public class WindowLoader {
         this.filename = name;
     }
 
+    // This function gets borderPane which is the node. It sets the appropriate window
+    // using setRoot() method.
     public boolean load(BorderPane borderPane) {
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(getClass().getResource(this.filename + ".fxml"));

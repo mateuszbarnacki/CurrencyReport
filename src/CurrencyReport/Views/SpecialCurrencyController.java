@@ -9,6 +9,7 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import CurrencyReport.Datamodel.*;
+import javafx.scene.layout.HBox;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +25,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * This class is a controller for 'Dane szczegółowe waluty -> Zatwierdź' window.
+ */
+
 public class SpecialCurrencyController {
     @FXML
     public BorderPane borderPane;
@@ -36,6 +41,8 @@ public class SpecialCurrencyController {
     @FXML
     public DatePicker specialDate;
     @FXML
+    public HBox searchSpecialDateBox;
+    @FXML
     public Label searchDateLabel;
     @FXML
     public Label searchValueLabel;
@@ -45,6 +52,8 @@ public class SpecialCurrencyController {
     private LocalDate beginning;
     private LocalDate end;
 
+    // This function initialize currency name and currency code labels, download the appropriate data
+    // from API NBP website and set end date as the default value of date picker.
     public void initialize() {
         this.beginning = CurrencyHolder.getInstance().getBeginning();
         this.end = CurrencyHolder.getInstance().getEnd();
@@ -52,6 +61,7 @@ public class SpecialCurrencyController {
         this.codeLabel.setText(CurrencyHolder.getInstance().getCode());
         this.specialDate.setValue(CurrencyHolder.getInstance().getEnd());
 
+        // Check whether the beginning date and end date are the same
         if (CurrencyHolder.getInstance().getBeginning().compareTo(CurrencyHolder.getInstance().getEnd()) == 0) {
             searchCurrencyDataForSpecialDate();
         } else {
@@ -66,17 +76,21 @@ public class SpecialCurrencyController {
             }
         });
 
+        this.searchSpecialDateBox.setVisible(false);
         Task<ObservableList<CurrencyHistory>> task = new GetHistory();
         this.historyTableView.itemsProperty().bind(task.valueProperty());
         new Thread(task).start();
     }
 
+    // This function handles 'Powrót' button
     @FXML
     public void loadPreviousPage() {
         WindowLoader loader = new WindowLoader("SearchDataWindow");
         loader.load(this.borderPane);
     }
 
+    // This function handles 'Rysuj wykres' button. It draws a chart based on the downloaded data
+    // presented in the table.
     @FXML
     public void drawChart(ActionEvent event) {
         double max = 0.0, min = 10.0;
@@ -125,18 +139,12 @@ public class SpecialCurrencyController {
         if(response.isPresent() && (response.get() == ButtonType.OK)) dialog.close();
     }
 
+    // This function handles 'Szukaj' button. It search for a single currency rate from a specific
+    // date.
     @FXML
     public void searchSpecialValue(ActionEvent event) {
         if (this.specialDate.getValue().compareTo(this.end) > 0 || this.specialDate.getValue().compareTo(this.beginning) < 0) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Błędna data");
-            alert.setHeaderText(null);
-            alert.setContentText("Wybrano date spoza zakresu wyszukanej historii!");
-
-            Optional<ButtonType> response = alert.showAndWait();
-            if (response.isPresent()) {
-                alert.close();
-            }
+            alertCreator("Błędna data", "Wybrano date spoza zakresu wyszukanej historii!");
         } else {
             boolean isExists = false;
             for (CurrencyHistory elem : this.history) {
@@ -147,25 +155,21 @@ public class SpecialCurrencyController {
                 }
             }
             if (!isExists) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Błędna data");
-                alert.setHeaderText(null);
-                alert.setContentText("Brak danych dla wybranej daty! \nBłąd spowodowany brakiem notowania w danym dniu \nkalendarzowym.");
-
-                Optional<ButtonType> response = alert.showAndWait();
-                if (response.isPresent()) {
-                    alert.close();
-                }
+                alertCreator("Błędna data", "Brak danych dla wybranej daty! \nBłąd spowodowany brakiem notowania w danym dniu \nkalendarzowym.");
+            } else {
+                this.searchSpecialDateBox.setVisible(true);
             }
         }
     }
 
+    // This function create a query, which returns a currency rate from a single day.
     private void searchCurrencyDataForSpecialDate() {
         Currency currency = Datasource.getInstance().getCurrencyByName(CurrencyHolder.getInstance().getName());
         executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/");
         CurrenciesData.getInstance().copy(this.history);
     }
 
+    // This function create a query, which returns a currency rates from a specific period of time.
     private void searchCurrencyDataForPeriodOfTime() {
         final long dayConst = 24*3600*1000;
         long diffOfDays;
@@ -175,6 +179,8 @@ public class SpecialCurrencyController {
         MyPeriod myPeriod;
         LocalDate temp;
         List<MyPeriod> myPeriods = new ArrayList<>();
+        // This loop divide a whole period of time into 80-days periods. It stores all these periods
+        // in a list.
         do {
             beginning = Date.from(CurrencyHolder.getInstance().getBeginning().atStartOfDay(ZoneId.systemDefault()).toInstant());
             end = Date.from(CurrencyHolder.getInstance().getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -190,6 +196,7 @@ public class SpecialCurrencyController {
         } while (diffOfDays > 80L);
         int idx = myPeriods.size()-1;
         for (int i = idx; i >= 0; i--) {
+            // If the currency rate was unavailable from the beginnig date it change the beginning date.
             if (this.beginning.compareTo(myPeriods.get(i).getBeginning()) > 0) {
                 this.beginning = myPeriods.get(i).getBeginning();
             }
@@ -197,9 +204,11 @@ public class SpecialCurrencyController {
             CurrencyHolder.getInstance().setEnd(myPeriods.get(i).getEnd());
             executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + myPeriods.get(i).getBeginning().toString() + "/" + myPeriods.get(i).getEnd().toString() + "/");
         }
+        // Downloaded data is stored in CurrenciesData class
         CurrenciesData.getInstance().copy(this.history);
     }
 
+    // This function executes the query and download the data from API NBP website.
     private void executeQuery(String query) {
         try {
             URL url = new URL(query);
@@ -208,6 +217,7 @@ public class SpecialCurrencyController {
             connection.setReadTimeout(10000);
             int code = connection.getResponseCode();
 
+            // Code 404 mean that data are unavailable. It tries to get data from previous day.
             if (code == 404) {
                 Currency currency = Datasource.getInstance().getCurrencyByName(CurrencyHolder.getInstance().getName());
                 CurrencyHolder.getInstance().setBeginning(CurrencyHolder.getInstance().getBeginning().minusDays(1));
@@ -215,9 +225,9 @@ public class SpecialCurrencyController {
                     this.beginning = CurrencyHolder.getInstance().getBeginning();
                 }
                 executeQuery("http://api.nbp.pl/api/exchangerates/rates/" + currency.getType() + "/" + currency.getCode() + "/" + CurrencyHolder.getInstance().getBeginning().toString() + "/" + CurrencyHolder.getInstance().getEnd().toString() + "/");
-            } else if (code != 200) {
+            } else if (code != 200) { // If response code is different than 404 this method prints error message
                 System.out.println("Couldn't get data!");
-            } else {
+            } else { // Method gets the data and stores it in appropriate lists.
                 BufferedReader input = new BufferedReader(new InputStreamReader(url.openStream()));
                 String line;
                 while((line = input.readLine()) != null) {
@@ -233,11 +243,13 @@ public class SpecialCurrencyController {
                 }
                 input.close();
             }
+            // Currency rates are added to history lists, which is the main container for all searched data
             if (this.dates.size() == this.values.size()) {
                 for (int i = 0; i < this.dates.size(); i++) {
                     this.history.add(new CurrencyHistory(this.dates.get(i), this.values.get(i)));
                 }
             }
+            // Clear other lists
             this.dates.clear();
             this.values.clear();
         } catch (MalformedURLException e) {
@@ -248,8 +260,23 @@ public class SpecialCurrencyController {
             e.printStackTrace();
         }
     }
+
+    private void alertCreator(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+
+        Optional<ButtonType> response = alert.showAndWait();
+        if (response.isPresent()) {
+            alert.close();
+        }
+    }
 }
 
+/**
+ * This class loads searched data.
+ */
 class GetHistory extends Task {
     @Override
     protected ObservableList<CurrencyHistory> call() throws Exception {
